@@ -6,7 +6,7 @@
 import padding from './rules/padding';
 import paddingBeforeDescribeBlocks from './rules/padding-before-describe-blocks';
 import paddingBeforeTestBlocks from './rules/padding-before-test-blocks';
-import paddingBeforeExpectStatements from "./rules/padding-before-expect-statements";
+import paddingBeforeExpectStatements from './rules/padding-before-expect-statements';
 
 //------------------------------------------------------------------------------
 // Plugin Definition

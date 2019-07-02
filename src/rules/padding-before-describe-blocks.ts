@@ -5,8 +5,8 @@ export default {
   create(context) {
     const ctx = Object.create(context, {
       options: {
-        value: [{blankLine: 'always', prev: '*', next: 'describe'}]
-      }
+        value: [{ blankLine: 'always', prev: '*', next: 'describe' }],
+      },
     });
 
     return padding.create(ctx);

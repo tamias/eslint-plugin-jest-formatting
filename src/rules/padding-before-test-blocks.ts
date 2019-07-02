@@ -6,10 +6,10 @@ export default {
     const ctx = Object.create(context, {
       options: {
         value: [
-          {blankLine: 'always', prev: '*', next: 'test'},
-          {blankLine: 'always', prev: '*', next: 'it'},
-        ]
-      }
+          { blankLine: 'always', prev: '*', next: 'test' },
+          { blankLine: 'always', prev: '*', next: 'it' },
+        ],
+      },
     });
 
     return padding.create(ctx);
