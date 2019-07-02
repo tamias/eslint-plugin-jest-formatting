@@ -5,7 +5,10 @@ export default {
   create(context) {
     const ctx = Object.create(context, {
       options: {
-        value: [{blankLine: 'always', prev: '*', next: 'describe'}]
+        value: [
+          {blankLine: 'always', prev: '*', next: 'expect'},
+          {blankLine: 'any', prev: 'expect', next: 'expect'}
+        ]
       }
     });
 
