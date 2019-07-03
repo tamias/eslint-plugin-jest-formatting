@@ -22,7 +22,7 @@
     "format": "yarn build && yarn link-plugin && yarn pretty --write && yarn eslint --fix .",
     "build": "tsc",
     "test": "yarn build && jest",
-    "link-plugin": "yarn link && yarn link eslint-plugin-jest-formatting"
+    "link-plugin": "yarn link --silent && yarn link eslint-plugin-jest-formatting"
   },
   "peerDependencies": {
     "eslint": "5.x"
