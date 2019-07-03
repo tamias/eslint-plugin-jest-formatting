@@ -90,7 +90,7 @@ describe
   });
 `;
 
-ruleTester.run('padding-describe-blocks', rule, {
+ruleTester.run('padding-before-describe-blocks', rule, {
   valid: [valid],
   invalid: [
     {

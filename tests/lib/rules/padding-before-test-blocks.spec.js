@@ -84,7 +84,7 @@ test
   .skip('skippy skip', () => {});
 `;
 
-ruleTester.run('padding-between-test-blocks', rule, {
+ruleTester.run('padding-before-test-blocks', rule, {
   valid: [valid],
   invalid: [
     {

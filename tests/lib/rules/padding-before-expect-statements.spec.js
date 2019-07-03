@@ -1,6 +1,5 @@
 /**
  * @fileoverview Enforces single line padding before expect statements
- * @author Ben Kimpel
  */
 
 //------------------------------------------------------------------------------
@@ -100,7 +99,7 @@ describe('someText', () => {
 });
 `;
 
-ruleTester.run('padding-describe-blocks', rule, {
+ruleTester.run('padding-before-expect-statements', rule, {
   valid: [valid],
   invalid: [
     {
