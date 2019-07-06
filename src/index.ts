@@ -46,23 +46,27 @@ export const rules = makeRules({
   'padding-before-test-blocks': {
     description: 'require padding line before test/it blocks',
     url: '',
-    options: [
-      { blankLine: 'always', prev: '*', next: 'test' },
-      { blankLine: 'always', prev: '*', next: 'it' },
-    ],
+    options: [{ blankLine: 'always', prev: '*', next: ['test', 'it'] }],
   },
   'padding-before-all': {
     description: 'require a padding line before all jest statements',
     url: '',
     options: [
-      { blankLine: 'always', prev: '*', next: 'afterAll' },
-      { blankLine: 'always', prev: '*', next: 'afterEach' },
-      { blankLine: 'always', prev: '*', next: 'beforeAll' },
-      { blankLine: 'always', prev: '*', next: 'describe' },
-      { blankLine: 'always', prev: '*', next: 'expect' },
+      {
+        blankLine: 'always',
+        prev: '*',
+        next: [
+          'afterAll',
+          'afterEach',
+          'beforeAll',
+          'beforeEach',
+          'describe',
+          'expect',
+          'it',
+          'test',
+        ],
+      },
       { blankLine: 'any', prev: 'expect', next: 'expect' },
-      { blankLine: 'always', prev: '*', next: 'test' },
-      { blankLine: 'always', prev: '*', next: 'it' },
     ],
   },
 });

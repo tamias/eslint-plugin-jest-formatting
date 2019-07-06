@@ -8,13 +8,13 @@ type TokenIdentifier =
   | 'beforeEach'
   | 'describe'
   | 'expect'
-  | 'test'
-  | 'it';
+  | 'it'
+  | 'test';
 
 interface Option {
   blankLine: 'always' | 'any' | 'never';
-  prev: TokenIdentifier;
-  next: TokenIdentifier;
+  prev: TokenIdentifier | TokenIdentifier[];
+  next: TokenIdentifier | TokenIdentifier[];
 }
 
 interface RuleDef {
