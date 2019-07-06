@@ -3,28 +3,66 @@
  * @author Dan
  */
 
-import padding from './rules/padding';
-import paddingBeforeAfterAllBlocks from './rules/padding-before-after-all-blocks';
-import paddingBeforeAfterEachBlocks from './rules/padding-before-after-each-blocks';
-import paddingBeforeBeforeAllBlocks from './rules/padding-before-before-all-blocks';
-import paddingBeforeBeforeEachBlocks from './rules/padding-before-before-each-blocks';
-import paddingBeforeDescribeBlocks from './rules/padding-before-describe-blocks';
-import paddingBeforeExpectStatements from './rules/padding-before-expect-statements';
-import paddingBeforeTestBlocks from './rules/padding-before-test-blocks';
+import { makeRules } from './utils';
 
 //------------------------------------------------------------------------------
 // Plugin Definition
 //------------------------------------------------------------------------------
 
-// import all rules in lib/rules
-
-export const rules = {
-  padding,
-  'padding-before-after-all-blocks': paddingBeforeAfterAllBlocks,
-  'padding-before-after-each-blocks': paddingBeforeAfterEachBlocks,
-  'padding-before-before-all-blocks': paddingBeforeBeforeAllBlocks,
-  'padding-before-before-each-blocks': paddingBeforeBeforeEachBlocks,
-  'padding-before-describe-blocks': paddingBeforeDescribeBlocks,
-  'padding-before-expect-statements': paddingBeforeExpectStatements,
-  'padding-before-test-blocks': paddingBeforeTestBlocks,
-};
+export const rules = makeRules({
+  'padding-before-after-all-blocks': {
+    description: 'require padding line before afterAll blocks',
+    url: '',
+    options: [{ blankLine: 'always', prev: '*', next: 'afterAll' }],
+  },
+  'padding-before-after-each-blocks': {
+    description: 'require padding line before afterEach blocks',
+    url: '',
+    options: [{ blankLine: 'always', prev: '*', next: 'afterEach' }],
+  },
+  'padding-before-before-all-blocks': {
+    description: 'require padding line before beforeAll blocks',
+    url: '',
+    options: [{ blankLine: 'always', prev: '*', next: 'beforeAll' }],
+  },
+  'padding-before-before-each-blocks': {
+    description: 'require padding line before beforeEach blocks',
+    url: '',
+    options: [{ blankLine: 'always', prev: '*', next: 'beforeEach' }],
+  },
+  'padding-before-describe-blocks': {
+    description: 'require padding line before describe blocks',
+    url: '',
+    options: [{ blankLine: 'always', prev: '*', next: 'describe' }],
+  },
+  'padding-before-expect-statements': {
+    description: 'require padding line before expect statements',
+    url: '',
+    options: [
+      { blankLine: 'always', prev: '*', next: 'expect' },
+      { blankLine: 'any', prev: 'expect', next: 'expect' },
+    ],
+  },
+  'padding-before-test-blocks': {
+    description: 'require padding line before test/it blocks',
+    url: '',
+    options: [
+      { blankLine: 'always', prev: '*', next: 'test' },
+      { blankLine: 'always', prev: '*', next: 'it' },
+    ],
+  },
+  'padding-before-all': {
+    description: 'require a padding line before all jest statements',
+    url: '',
+    options: [
+      { blankLine: 'always', prev: '*', next: 'afterAll' },
+      { blankLine: 'always', prev: '*', next: 'afterEach' },
+      { blankLine: 'always', prev: '*', next: 'beforeAll' },
+      { blankLine: 'always', prev: '*', next: 'describe' },
+      { blankLine: 'always', prev: '*', next: 'expect' },
+      { blankLine: 'any', prev: 'expect', next: 'expect' },
+      { blankLine: 'always', prev: '*', next: 'test' },
+      { blankLine: 'always', prev: '*', next: 'it' },
+    ],
+  },
+});
