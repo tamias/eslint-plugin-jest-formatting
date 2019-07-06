@@ -31,23 +31,27 @@ interface RuleDefs {
  * Extend and configure the base padding rule to make a new rule
  */
 export const makeRule = ({ description, url, options }: RuleDef) => {
-  // TODO: Add description and url to docs
-
-  return Object.create(padding, {
-    create: {
-      value: context => {
-        // Copy the RuleContext and overwrite options; it's frozen and
-        // we can't set them directly. We're just configuring our own stuff.
-        const ctx = Object.create(context, { options: { value: options } });
-
-        // Freeze it again
-        Object.freeze(ctx);
-
-        // Call the original create method
-        return padding.create(ctx);
+  return {
+    meta: {
+      ...padding.meta,
+      docs: {
+        ...padding.meta.docs,
+        description,
+        url,
       },
     },
-  });
+    create(context) {
+      // Copy the RuleContext and overwrite options; it's frozen and
+      // we can't set them directly.
+      const ctx = Object.create(context, { options: { value: options } });
+
+      // Freeze it again
+      Object.freeze(ctx);
+
+      // Call the original create method
+      return padding.create(ctx);
+    },
+  };
 };
 
 /**

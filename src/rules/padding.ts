@@ -236,11 +236,8 @@ export default {
   meta: {
     type: 'layout',
     docs: {
-      description: 'require or disallow padding lines between jest statements',
       category: 'Stylistic Issues',
       recommended: false,
-      // TODO: Link to page on GH wiki
-      // url: 'https://eslint.org/docs/rules/padding-line-between-statements',
     },
     fixable: 'whitespace',
     schema: {
