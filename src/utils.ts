@@ -28,18 +28,23 @@ interface RuleDefs {
 }
 
 /**
- * Extend and configure the base padding rule to make a new rule
+ * Extend the base padding rule to make a new rule
  */
 export const makeRule = ({ description, url, options }: RuleDef) => {
   return {
     meta: {
+      // Take mose of the padding meta data
       ...padding.meta,
+      // Customize docs
       docs: {
         ...padding.meta.docs,
+        // Add description and url for new rule
         description,
         url,
       },
     },
+    // Wrap original create with a function that modifies RuleContext
+    // with the options for new rule
     create(context) {
       // Copy the RuleContext and overwrite options; it's frozen and
       // we can't set them directly.
