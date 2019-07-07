@@ -85,15 +85,23 @@ test
 `;
 
 ruleTester.run('padding-before-test-blocks', rule, {
-  valid: [valid],
+  valid: [
+    valid,
+    {
+      code: invalid,
+      filename: 'src/component.jsx'
+    }
+  ],
   invalid: [
     {
       code: invalid,
+      filename: 'src/component.test.jsx',
       errors: 10,
       output: valid,
     },
     {
       code: invalid,
+      filename: 'src/component.test.js',
       errors: [
         {
           message: 'Expected blank line before this statement.',

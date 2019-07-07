@@ -91,15 +91,23 @@ describe
 `;
 
 ruleTester.run('padding-before-describe-blocks', rule, {
-  valid: [valid],
+  valid: [
+    valid,
+    {
+      code: invalid,
+      filename: 'src/component.jsx',
+    }
+  ],
   invalid: [
     {
       code: invalid,
+      filename: 'src/component.test.jsx',
       errors: 7,
       output: valid,
     },
     {
       code: invalid,
+      filename: 'src/component.test.js',
       errors: [
         {
           message: 'Expected blank line before this statement.',

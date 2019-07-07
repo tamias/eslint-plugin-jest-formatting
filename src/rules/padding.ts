@@ -14,6 +14,17 @@ const astUtils = require('eslint/lib/util/ast-utils');
 //------------------------------------------------------------------------------
 
 /**
+ * Check if we're in a test file
+ *
+ * @param filename {string}
+ */
+function isTestFile(filename) {
+  // NOTE: Maybe make this test configurable as a rule option at some point?
+  //       filenamePattern or something like that.
+  return filename.includes('test') || filename.includes('spec');
+}
+
+/**
  * Creates tester which check if an expression node has a certain name
  *
  * @param {string} name The Jest function name to test.
@@ -209,6 +220,12 @@ export default {
     },
   },
   create(context) {
+    const filename = context.getFilename();
+
+    if (!isTestFile(filename)) {
+      return {};
+    }
+
     const sourceCode = context.getSourceCode();
     const configureList = context.options || [];
     let scopeInfo = null;

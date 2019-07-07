@@ -100,15 +100,23 @@ describe('someText', () => {
 `;
 
 ruleTester.run('padding-before-expect-statements', rule, {
-  valid: [valid],
+  valid: [
+    valid,
+    {
+      code: invalid,
+      filename: 'src/component.jsx',
+    }
+  ],
   invalid: [
     {
       code: invalid,
+      filename: 'src/component.test.jsx',
       errors: 4,
       output: valid,
     },
     {
       code: invalid,
+      filename: 'src/component.test.js',
       errors: [
         {
           message: 'Expected blank line before this statement.',
