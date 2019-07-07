@@ -13,12 +13,6 @@ const astUtils = require('eslint/lib/util/ast-utils');
 // Helpers
 //------------------------------------------------------------------------------
 
-const LT = `[${Array.from(astUtils.LINEBREAKS).join('')}]`;
-const PADDING_LINE_SEQUENCE = new RegExp(
-  String.raw`^(\s*?${LT})\s*${LT}(\s*;?)$`,
-  'u',
-);
-
 /**
  * Creates tester which check if an expression node has a certain name
  *
@@ -71,18 +65,6 @@ function getActualLastToken(sourceCode, node) {
 }
 
 /**
- * This returns the concatenation of the first 2 captured strings.
- * @param {string} _ Unused. Whole matched string.
- * @param {string} trailingSpaces The trailing spaces of the first line.
- * @param {string} indentSpaces The indentation spaces of the last line.
- * @returns {string} The concatenation of trailingSpaces and indentSpaces.
- * @private
- */
-function replacerToRemovePaddingLines(_, trailingSpaces, indentSpaces) {
-  return trailingSpaces + indentSpaces;
-}
-
-/**
  * Check and report statements for `any` configuration.
  * It does nothing.
  *
@@ -90,47 +72,6 @@ function replacerToRemovePaddingLines(_, trailingSpaces, indentSpaces) {
  * @private
  */
 function verifyForAny() {}
-
-/**
- * Check and report statements for `never` configuration.
- * This autofix removes blank lines between the given 2 statements.
- * However, if comments exist between 2 blank lines, it does not remove those
- * blank lines automatically.
- *
- * @param {RuleContext} context The rule context to report.
- * @param {ASTNode} _ Unused. The previous node to check.
- * @param {ASTNode} nextNode The next node to check.
- * @param {Array<Token[]>} paddingLines The array of token pairs that blank
- * lines exist between the pair.
- * @returns {void}
- * @private
- */
-function verifyForNever(context, _, nextNode, paddingLines) {
-  if (paddingLines.length === 0) {
-    return;
-  }
-
-  context.report({
-    node: nextNode,
-    message: 'Unexpected blank line before this statement.',
-    fix(fixer) {
-      if (paddingLines.length >= 2) {
-        return null;
-      }
-
-      const prevToken = paddingLines[0][0];
-      const nextToken = paddingLines[0][1];
-      const start = prevToken.range[1];
-      const end = nextToken.range[0];
-      const text = context
-        .getSourceCode()
-        .text.slice(start, end)
-        .replace(PADDING_LINE_SEQUENCE, replacerToRemovePaddingLines);
-
-      return fixer.replaceTextRange([start, end], text);
-    },
-  });
-}
 
 /**
  * Check and report statements for `always` configuration.
@@ -201,13 +142,12 @@ function verifyForAlways(context, prevNode, nextNode, paddingLines) {
 
 /**
  * Types of blank lines.
- * `any`, `never`, and `always` are defined.
+ * `any`  and `always` are defined.
  * Those have `verify` method to check and report statements.
  * @private
  */
 const PaddingTypes = {
   any: { verify: verifyForAny },
-  never: { verify: verifyForNever },
   always: { verify: verifyForAlways },
 };
 
@@ -235,10 +175,6 @@ const StatementTypes = {
 export default {
   meta: {
     type: 'layout',
-    docs: {
-      category: 'Stylistic Issues',
-      recommended: false,
-    },
     fixable: 'whitespace',
     schema: {
       definitions: {

@@ -17,34 +17,21 @@ interface Option {
   next: TokenIdentifier | TokenIdentifier[];
 }
 
-interface RuleDef {
-  description: string;
-  url: string;
-  options: Option[];
-}
-
 interface RuleDefs {
-  [name: string]: RuleDef;
+  [name: string]: Option[];
 }
 
 /**
  * Extend the base padding rule to make a new rule
  */
-export const makeRule = ({ description, url, options }: RuleDef) => {
+export const makeRule = (options: Option[]) => {
   return {
     meta: {
-      // Take mose of the padding meta data
-      ...padding.meta,
-      // Customize docs
-      docs: {
-        ...padding.meta.docs,
-        // Add description and url for new rule
-        description,
-        url,
-      },
+      type: 'layout',
+      fixable: 'whitespace',
     },
-    // Wrap original create with a function that modifies RuleContext
-    // with the options for new rule
+    // Wrap base padding create with a function that modifies RuleContext
+    // with the options for the new rule
     create(context) {
       // Copy the RuleContext and overwrite options; it's frozen and
       // we can't set them directly.
@@ -53,7 +40,7 @@ export const makeRule = ({ description, url, options }: RuleDef) => {
       // Freeze it again
       Object.freeze(ctx);
 
-      // Call the original create method
+      // Call the original create method with new context
       return padding.create(ctx);
     },
   };
