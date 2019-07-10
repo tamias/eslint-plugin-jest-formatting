@@ -1,4 +1,4 @@
-import { Rule } from "eslint";
+import { Rule } from 'eslint';
 import padding from './rules/padding';
 
 type TokenIdentifier =
