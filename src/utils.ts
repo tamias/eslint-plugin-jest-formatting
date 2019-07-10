@@ -1,3 +1,4 @@
+import { Rule } from "eslint";
 import padding from './rules/padding';
 
 type TokenIdentifier =
@@ -11,28 +12,20 @@ type TokenIdentifier =
   | 'it'
   | 'test';
 
-interface Option {
+interface RuleOption {
   blankLine: 'always' | 'any' | 'never';
   prev: TokenIdentifier | TokenIdentifier[];
   next: TokenIdentifier | TokenIdentifier[];
 }
 
-interface RuleDefs {
-  [name: string]: Option[];
-}
-
-/**
- * Extend the base padding rule to make a new rule
- */
-export const makeRule = (options: Option[]) => {
+// Returns a rule that wraps a call to padding.create and adds the given options
+// to the RuleContext so users don't have to.
+export const makeRule = (options: RuleOption[]): Rule.RuleModule => {
   return {
     meta: {
-      type: 'layout',
       fixable: 'whitespace',
     },
-    // Wrap base padding create with a function that modifies RuleContext
-    // with the options for the new rule
-    create(context) {
+    create(context: Rule.RuleContext) {
       // Copy the RuleContext and overwrite options; it's frozen and
       // we can't set them directly.
       const ctx = Object.create(context, { options: { value: options } });
@@ -44,14 +37,4 @@ export const makeRule = (options: Option[]) => {
       return padding.create(ctx);
     },
   };
-};
-
-/**
- * Build a set of rules from a RuleDefs object
- */
-export const makeRules = (ruleDefs: RuleDefs) => {
-  return Object.keys(ruleDefs).reduce(
-    (rules, key) => Object.assign(rules, { [key]: makeRule(ruleDefs[key]) }),
-    {},
-  );
 };

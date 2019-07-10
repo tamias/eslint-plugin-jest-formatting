@@ -2,38 +2,35 @@
  * @fileoverview Rule to require or disallow newlines between jest functions,
  *   based on eslint/padding-line-between-statements by Toru Nagashima
  */
+import { AST, Rule, SourceCode } from 'eslint';
 
-//------------------------------------------------------------------------------
-// Requirements
-//------------------------------------------------------------------------------
+const STATEMENT_LIST_PARENTS = new Set([
+  'Program',
+  'BlockStatement',
+  'SwitchCase',
+]);
 
-const astUtils = require('eslint/lib/util/ast-utils');
+const isTokenOnSameLine = (left: AST.Token, right: AST.Token): boolean => {
+  return left.loc.end.line === right.loc.start.line;
+};
 
-//------------------------------------------------------------------------------
-// Helpers
-//------------------------------------------------------------------------------
+const isSemicolonToken = (token: AST.Token): boolean => {
+  return token.value === ';' && token.type === 'Punctuator';
+};
 
-/**
- * Check if we're in a test file
- *
- * @param filename {string}
- */
-function isTestFile(filename) {
-  // NOTE: Maybe make this test configurable as a rule option at some point?
-  //       filenamePattern or something like that.
+// NOTE: Should probably be configurable
+const isTestFile = (filename: string): boolean => {
   return filename.includes('test') || filename.includes('spec');
-}
+};
 
 /**
  * Creates tester which check if an expression node has a certain name
  *
- * @param {string} name The Jest function name to test.
  * @returns {Object} the created tester.
- * @private
  */
-function newJestTokenTester(name) {
+function newJestTokenTester(name: string) {
   return {
-    test: (node, sourceCode) => {
+    test: (node, sourceCode: SourceCode): boolean => {
       const token = sourceCode.getFirstToken(node);
 
       return (
@@ -54,12 +51,9 @@ function newJestTokenTester(name) {
  *     foo()
  *     ;[1, 2, 3].forEach(bar)
  *
- * @param {SourceCode} sourceCode The source code to get tokens.
  * @param {ASTNode} node The node to get.
- * @returns {Token} The actual last token.
- * @private
  */
-function getActualLastToken(sourceCode, node) {
+function getActualLastToken(sourceCode: SourceCode, node): AST.Token {
   const semiToken = sourceCode.getLastToken(node);
   const prevToken = sourceCode.getTokenBefore(semiToken);
   const nextToken = sourceCode.getTokenAfter(semiToken);
@@ -67,7 +61,7 @@ function getActualLastToken(sourceCode, node) {
     prevToken &&
       nextToken &&
       prevToken.range[0] >= node.range[0] &&
-      astUtils.isSemicolonToken(semiToken) &&
+      isSemicolonToken(semiToken) &&
       semiToken.loc.start.line !== prevToken.loc.end.line &&
       semiToken.loc.end.line === nextToken.loc.start.line,
   );
@@ -76,13 +70,9 @@ function getActualLastToken(sourceCode, node) {
 }
 
 /**
- * Check and report statements for `any` configuration.
- * It does nothing.
- *
- * @returns {void}
- * @private
+ * Check and report statements for `any` configuration. It does nothing.
  */
-function verifyForAny() {}
+function verifyForAny(): void {}
 
 /**
  * Check and report statements for `always` configuration.
@@ -90,15 +80,15 @@ function verifyForAny() {}
  * If the `prevNode` has trailing comments, it inserts a blank line after the
  * trailing comments.
  *
- * @param {RuleContext} context The rule context to report.
  * @param {ASTNode} prevNode The previous node to check.
  * @param {ASTNode} nextNode The next node to check.
- * @param {Array<Token[]>} paddingLines The array of token pairs that blank
- * lines exist between the pair.
- * @returns {void}
- * @private
  */
-function verifyForAlways(context, prevNode, nextNode, paddingLines) {
+function verifyForAlways(
+  context: Rule.RuleContext,
+  prevNode,
+  nextNode,
+  paddingLines: AST.Token[],
+): void {
   if (paddingLines.length > 0) {
     return;
   }
@@ -129,20 +119,18 @@ function verifyForAlways(context, prevNode, nextNode, paddingLines) {
            *
            *     // comment.
            *     bar();
-           *
-           * @param {Token} token The token to check.
-           * @returns {boolean} `true` if the token is not a trailing comment.
-           * @private
            */
-          filter(token) {
-            if (astUtils.isTokenOnSameLine(prevToken, token)) {
+          filter(token: AST.Token): boolean {
+            if (isTokenOnSameLine(prevToken, token)) {
               prevToken = token;
               return false;
             }
+
             return true;
           },
         }) || nextNode;
-      const insertText = astUtils.isTokenOnSameLine(prevToken, nextToken)
+
+      const insertText = isTokenOnSameLine(prevToken, nextToken)
         ? '\n\n'
         : '\n';
 
@@ -151,11 +139,11 @@ function verifyForAlways(context, prevNode, nextNode, paddingLines) {
   });
 }
 
+// TODO: Do these without `test` and `verify`
 /**
  * Types of blank lines.
  * `any`  and `always` are defined.
  * Those have `verify` method to check and report statements.
- * @private
  */
 const PaddingTypes = {
   any: { verify: verifyForAny },
@@ -165,7 +153,6 @@ const PaddingTypes = {
 /**
  * Types of statements.
  * Those have `test` method to check it matches to the given statement.
- * @private
  */
 const StatementTypes = {
   '*': { test: () => true },
@@ -183,9 +170,8 @@ const StatementTypes = {
 // Rule Definition
 //------------------------------------------------------------------------------
 
-export default {
+export default <Rule.RuleModule>{
   meta: {
-    type: 'layout',
     fixable: 'whitespace',
     schema: {
       definitions: {
@@ -219,7 +205,7 @@ export default {
       additionalItems: false,
     },
   },
-  create(context) {
+  create(context: Rule.RuleContext): Rule.RuleListener {
     const filename = context.getFilename();
 
     if (!isTestFile(filename)) {
@@ -233,10 +219,8 @@ export default {
     /**
      * Processes to enter to new scope.
      * This manages the current previous statement.
-     * @returns {void}
-     * @private
      */
-    function enterScope() {
+    function enterScope(): void {
       scopeInfo = {
         upper: scopeInfo,
         prevNode: null,
@@ -245,10 +229,8 @@ export default {
 
     /**
      * Processes to exit from the current scope.
-     * @returns {void}
-     * @private
      */
-    function exitScope() {
+    function exitScope(): void {
       scopeInfo = scopeInfo.upper;
     }
 
@@ -256,11 +238,10 @@ export default {
      * Checks whether the given node matches the given type.
      *
      * @param {ASTNode} node The statement node to check.
-     * @param {string|string[]} type The statement type to check.
-     * @returns {boolean} `true` if the statement node matched the type.
-     * @private
+     *
+     * TODO: Make a Type for "type" with valid values?
      */
-    function match(node, type) {
+    function match(node, type: string | string[]): boolean {
       let innerStatementNode = node;
 
       while (innerStatementNode.type === 'LabeledStatement') {
@@ -292,6 +273,7 @@ export default {
           return PaddingTypes[configure.blankLine];
         }
       }
+
       return PaddingTypes.any;
     }
 
@@ -301,10 +283,8 @@ export default {
      *
      * @param {ASTNode} prevNode The previous statement to count.
      * @param {ASTNode} nextNode The current statement to count.
-     * @returns {Array<Token[]>} The array of token pairs.
-     * @private
      */
-    function getPaddingLineSequences(prevNode, nextNode) {
+    function getPaddingLineSequences(prevNode, nextNode): AST.Token[] {
       const pairs = [];
       let prevToken = getActualLastToken(sourceCode, prevNode);
 
@@ -329,13 +309,11 @@ export default {
      * Verify padding lines between the given node and the previous node.
      *
      * @param {ASTNode} node The node to verify.
-     * @returns {void}
-     * @private
      */
-    function verify(node) {
+    function verify(node): void {
       const parentType = node.parent.type;
       const validParent =
-        astUtils.STATEMENT_LIST_PARENTS.has(parentType) ||
+        STATEMENT_LIST_PARENTS.has(parentType) ||
         parentType === 'SwitchStatement';
 
       if (!validParent) {
@@ -361,10 +339,8 @@ export default {
      * Then process to enter to new scope.
      *
      * @param {ASTNode} node The node to verify.
-     * @returns {void}
-     * @private
      */
-    function verifyThenEnterScope(node) {
+    function verifyThenEnterScope(node): void {
       verify(node);
       enterScope();
     }
