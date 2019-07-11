@@ -1,27 +1,33 @@
 /**
- * @fileoverview Rule to require or disallow newlines between jest functions,
- *   based on eslint/padding-line-between-statements by Toru Nagashima
+ * @fileoverview Rule to require or disallow newlines between jest functions
+ *   Based on eslint/padding-line-between-statements by Toru Nagashima
+ *   See: https://github.com/eslint/eslint/blob/master/lib/rules/padding-line-between-statements.js
+ *
+ *   STATEMENT_LIST_PARENTS, isTokenOnSameLine and isSemiColonToken borrowed from
+ *   eslint ast-utils by Gyandeep Singh
+ *   See: https://github.com/eslint/eslint/blob/master/lib/rules/utils/ast-utils.js
  */
 import { AST, Rule, SourceCode } from 'eslint';
+import { Node } from 'estree';
 
 const STATEMENT_LIST_PARENTS = new Set([
   'Program',
   'BlockStatement',
   'SwitchCase',
+  'SwitchStatement',
 ]);
 
-const isTokenOnSameLine = (left: AST.Token, right: AST.Token): boolean => {
-  return left.loc.end.line === right.loc.start.line;
-};
+const isTokenOnSameLine = (
+  left: Node | AST.Token,
+  right: Node | AST.Token,
+): boolean => left.loc.end.line === right.loc.start.line;
 
-const isSemicolonToken = (token: AST.Token): boolean => {
-  return token.value === ';' && token.type === 'Punctuator';
-};
+const isSemicolonToken = (token: AST.Token): boolean =>
+  token.value === ';' && token.type === 'Punctuator';
 
 // NOTE: Should probably be configurable
-const isTestFile = (filename: string): boolean => {
-  return filename.includes('test') || filename.includes('spec');
-};
+const isTestFile = (filename: string): boolean =>
+  filename.includes('test') || filename.includes('spec');
 
 /**
  * Creates tester which check if an expression node has a certain name
@@ -30,7 +36,7 @@ const isTestFile = (filename: string): boolean => {
  */
 function newJestTokenTester(name: string) {
   return {
-    test: (node, sourceCode: SourceCode): boolean => {
+    test: (node: Node, sourceCode: SourceCode): boolean => {
       const token = sourceCode.getFirstToken(node);
 
       return (
@@ -50,10 +56,8 @@ function newJestTokenTester(name: string) {
  *
  *     foo()
  *     ;[1, 2, 3].forEach(bar)
- *
- * @param {ASTNode} node The node to get.
  */
-function getActualLastToken(sourceCode: SourceCode, node): AST.Token {
+function getActualLastToken(sourceCode: SourceCode, node: Node): AST.Token {
   const semiToken = sourceCode.getLastToken(node);
   const prevToken = sourceCode.getTokenBefore(semiToken);
   const nextToken = sourceCode.getTokenAfter(semiToken);
@@ -70,23 +74,15 @@ function getActualLastToken(sourceCode: SourceCode, node): AST.Token {
 }
 
 /**
- * Check and report statements for `any` configuration. It does nothing.
- */
-function verifyForAny(): void {}
-
-/**
  * Check and report statements for `always` configuration.
  * This autofix inserts a blank line between the given 2 statements.
  * If the `prevNode` has trailing comments, it inserts a blank line after the
  * trailing comments.
- *
- * @param {ASTNode} prevNode The previous node to check.
- * @param {ASTNode} nextNode The next node to check.
  */
 function verifyForAlways(
   context: Rule.RuleContext,
-  prevNode,
-  nextNode,
+  prevNode: Node,
+  nextNode: Node,
   paddingLines: AST.Token[],
 ): void {
   if (paddingLines.length > 0) {
@@ -96,7 +92,7 @@ function verifyForAlways(
   context.report({
     node: nextNode,
     message: 'Expected blank line before this statement.',
-    fix(fixer) {
+    fix(fixer: Rule.RuleFixer): Rule.Fix {
       const sourceCode = context.getSourceCode();
       let prevToken = getActualLastToken(sourceCode, prevNode);
       const nextToken =
@@ -146,7 +142,7 @@ function verifyForAlways(
  * Those have `verify` method to check and report statements.
  */
 const PaddingTypes = {
-  any: { verify: verifyForAny },
+  any: { verify: () => {} },
   always: { verify: verifyForAlways },
 };
 
@@ -216,10 +212,6 @@ export default <Rule.RuleModule>{
     const configureList = context.options || [];
     let scopeInfo = null;
 
-    /**
-     * Processes to enter to new scope.
-     * This manages the current previous statement.
-     */
     function enterScope(): void {
       scopeInfo = {
         upper: scopeInfo,
@@ -227,21 +219,15 @@ export default <Rule.RuleModule>{
       };
     }
 
-    /**
-     * Processes to exit from the current scope.
-     */
     function exitScope(): void {
       scopeInfo = scopeInfo.upper;
     }
 
     /**
      * Checks whether the given node matches the given type.
-     *
-     * @param {ASTNode} node The statement node to check.
-     *
      * TODO: Make a Type for "type" with valid values?
      */
-    function match(node, type: string | string[]): boolean {
+    function match(node: Node, type: string | string[]): boolean {
       let innerStatementNode = node;
 
       while (innerStatementNode.type === 'LabeledStatement') {
@@ -258,19 +244,14 @@ export default <Rule.RuleModule>{
     /**
      * Finds the last matched configure from configureList.
      *
-     * @param {ASTNode} prevNode The previous statement to match.
-     * @param {ASTNode} nextNode The current statement to match.
      * @returns {Object} The tester of the last matched configure.
-     * @private
      */
-    function getPaddingType(prevNode, nextNode) {
+    function getPaddingType(prevNode: Node, nextNode: Node) {
       for (let i = configureList.length - 1; i >= 0; --i) {
-        const configure = configureList[i];
-        const matched =
-          match(prevNode, configure.prev) && match(nextNode, configure.next);
+        const { prev, next, blankLine } = configureList[i];
 
-        if (matched) {
-          return PaddingTypes[configure.blankLine];
+        if (match(prevNode, prev) && match(nextNode, next)) {
+          return PaddingTypes[blankLine];
         }
       }
 
@@ -280,12 +261,12 @@ export default <Rule.RuleModule>{
     /**
      * Gets padding line sequences between the given 2 statements.
      * Comments are separators of the padding line sequences.
-     *
-     * @param {ASTNode} prevNode The previous statement to count.
-     * @param {ASTNode} nextNode The current statement to count.
      */
-    function getPaddingLineSequences(prevNode, nextNode): AST.Token[] {
-      const pairs = [];
+    function getPaddingLineSequences(
+      prevNode: Node,
+      nextNode: Node,
+    ): AST.Token[][] {
+      const pairs: AST.Token[][] = [];
       let prevToken = getActualLastToken(sourceCode, prevNode);
 
       if (nextNode.loc.start.line - prevToken.loc.end.line >= 2) {
@@ -307,14 +288,11 @@ export default <Rule.RuleModule>{
 
     /**
      * Verify padding lines between the given node and the previous node.
-     *
-     * @param {ASTNode} node The node to verify.
      */
+    // NOTE: Can't get type on this argument. It's being difficult
     function verify(node): void {
       const parentType = node.parent.type;
-      const validParent =
-        STATEMENT_LIST_PARENTS.has(parentType) ||
-        parentType === 'SwitchStatement';
+      const validParent = STATEMENT_LIST_PARENTS.has(parentType);
 
       if (!validParent) {
         return;
@@ -337,10 +315,8 @@ export default <Rule.RuleModule>{
     /**
      * Verify padding lines between the given node and the previous node.
      * Then process to enter to new scope.
-     *
-     * @param {ASTNode} node The node to verify.
      */
-    function verifyThenEnterScope(node): void {
+    function verifyThenEnterScope(node: Node): void {
       verify(node);
       enterScope();
     }
