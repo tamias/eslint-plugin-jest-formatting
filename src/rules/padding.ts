@@ -10,6 +10,19 @@
 import { AST, Rule, SourceCode } from 'eslint';
 import { Node } from 'estree';
 
+type StatementTypeTester = {
+  [test: string]: (node: Node, sourceCode: SourceCode) => boolean;
+};
+
+type PaddingTypeTester = {
+  [verify: string]: (
+    context: Rule.RuleContext,
+    prevNode: Node,
+    nextNode: Node,
+    paddingLines: AST.Token[][],
+  ) => void;
+};
+
 const STATEMENT_LIST_PARENTS = new Set([
   'Program',
   'BlockStatement',
@@ -31,10 +44,8 @@ const isTestFile = (filename: string): boolean =>
 
 /**
  * Creates tester which check if an expression node has a certain name
- *
- * @returns {Object} the created tester.
  */
-function newJestTokenTester(name: string) {
+function newJestTokenTester(name: string): StatementTypeTester {
   return {
     test: (node: Node, sourceCode: SourceCode): boolean => {
       const token = sourceCode.getFirstToken(node);
@@ -135,7 +146,6 @@ function verifyForAlways(
   });
 }
 
-// TODO: Do these without `test` and `verify`
 /**
  * Types of blank lines.
  * `any`  and `always` are defined.
@@ -213,10 +223,7 @@ export default <Rule.RuleModule>{
     let scopeInfo = null;
 
     function enterScope(): void {
-      scopeInfo = {
-        upper: scopeInfo,
-        prevNode: null,
-      };
+      scopeInfo = { upper: scopeInfo, prevNode: null };
     }
 
     function exitScope(): void {
@@ -225,7 +232,6 @@ export default <Rule.RuleModule>{
 
     /**
      * Checks whether the given node matches the given type.
-     * TODO: Make a Type for "type" with valid values?
      */
     function match(node: Node, type: string | string[]): boolean {
       let innerStatementNode = node;
@@ -243,10 +249,8 @@ export default <Rule.RuleModule>{
 
     /**
      * Finds the last matched configure from configureList.
-     *
-     * @returns {Object} The tester of the last matched configure.
      */
-    function getPaddingType(prevNode: Node, nextNode: Node) {
+    function getPaddingType(prevNode: Node, nextNode: Node): PaddingTypeTester {
       for (let i = configureList.length - 1; i >= 0; --i) {
         const { prev, next, blankLine } = configureList[i];
 
@@ -289,7 +293,6 @@ export default <Rule.RuleModule>{
     /**
      * Verify padding lines between the given node and the previous node.
      */
-    // NOTE: Can't get type on this argument. It's being difficult
     function verify(node): void {
       const parentType = node.parent.type;
       const validParent = STATEMENT_LIST_PARENTS.has(parentType);
